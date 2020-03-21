@@ -28,13 +28,24 @@ queue_t *q_new()
 void q_free(queue_t *q)
 {
     /* TODO: How about freeing the list elements and the strings? */
-    list_ele_t *tmp_head;
-    /* queue_t q : free(q)
+    list_ele_t *tmp;
+    /* Alloced elements
+     * queue_t q : free(q)
      *      list_ele_t *head : free(head)
      *          char *value : free(value)
-     *          struct ELE *next : free(value)
      *      list_ele_t *tail : free(tail)
+     *          char *value : free(value)
      */
+    /* Free head's element and other list_ele_t elements */
+    for (tmp = q->head; tmp; ) {
+        list_ele_t *tmp_head = tmp;
+        tmp = tmp->next;
+        free(tmp_head->value);
+        free(tmp_head);
+    }
+    /* Free tail's elements and itself*/
+    free(q->tail->value);
+    free(q->tail);
     /* Free queue structure */
     free(q);
 }
