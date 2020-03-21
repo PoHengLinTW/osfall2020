@@ -27,7 +27,6 @@ queue_t *q_new()
 /* Free all storage used by queue */
 void q_free(queue_t *q)
 {
-    /* TODO: How about freeing the list elements and the strings? */
     list_ele_t *tmp;
     /* Alloced elements
      * queue_t q : free(q)
@@ -59,12 +58,24 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
+    if (q==NULL) // if q is NULL
+        return false;
     list_ele_t *newh;
-    /* TODO: What should you do if the q is NULL? */
+    char *news;
+    /* malloc elements for new queue element */
+    news = malloc(strlen(s) * sizeof(char));
     newh = malloc(sizeof(list_ele_t));
-    /* Don't forget to allocate space for the string and copy it */
-    /* What if either call to malloc returns NULL? */
+    /* Check whether malloc is successful */
+    /* Maybe later use fprintf & fflush to detail the failure*/
+    if (news==NULL || newh==NULL)
+        return false;
+    strcpy(news, s);
+    newh->value = news;
+    /* Check tail, if it is NULL, this is the first insert */
+    if (q->tail==NULL)
+        q->tail = newh;
     newh->next = q->head;
+    q->size = q->size + 1;
     q->head = newh;
     return true;
 }
@@ -106,9 +117,9 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
  */
 int q_size(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* Remember: It should operate in O(1) time */
-    /* TODO: Remove the above comment when you are about to implement. */
+    /* O(1) */
+    if (q) 
+        return q->size;
     return 0;
 }
 
