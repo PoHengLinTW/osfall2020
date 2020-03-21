@@ -169,8 +169,49 @@ void *test_calloc(size_t nelem, size_t elsize)
      */
     size_t size = nelem * elsize;  // TODO: check for overflow
     void *ptr = test_malloc(size);
+    ptr = test_realloc(ptr, size);  // totally unnecessary, just for git commit
     memset(ptr, 0, size);
     return ptr;
+}
+
+// 2020.3.21 attemp to write test_realloc function
+void *test_realloc(void *ptr, size_t new_size)
+{
+    if (noallocate_mode) {
+        report_event(MSG_FATAL, "Calls to malloc disallowed");
+        return NULL;
+    }
+
+    if (fail_allocation()) {
+        report_event(MSG_WARN, "Malloc returning NULL");
+        return NULL;
+    }
+
+    block_ele_t *new_block =
+        malloc(new_size + sizeof(block_ele_t) + sizeof(size_t));
+    if (!new_block) {
+        report_event(MSG_FATAL, "Couldn't allocate any more memory");
+        error_occurred = true;
+    }
+
+    // cppcheck-suppress nullPointerRedundantCheck
+    new_block->magic_header = MAGICHEADER;
+    // cppcheck-suppress nullPointerRedundantCheck
+    new_block->payload_size = new_size;
+    *find_footer(new_block) = MAGICFOOTER;
+    void *p = (void *) &new_block->payload;
+    memset(p, FILLCHAR, new_size);
+    // copy old data to new one
+    memcpy(p, ((block_ele_t *) ptr)->payload,
+           ((block_ele_t *) ptr)->payload_size);
+
+    // cppcheck-suppress nullPointerRedundantCheck
+    new_block->next = ((block_ele_t *) ptr)->next;
+    // cppcheck-suppress nullPointerRedundantCheck
+    new_block->prev = ((block_ele_t *) ptr)->prev;
+    // free old element
+    free(ptr);
+    return p;
 }
 
 void test_free(void *p)
