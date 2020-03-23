@@ -27,25 +27,18 @@ queue_t *q_new()
 /* Free all storage used by queue */
 void q_free(queue_t *q)
 {
-    list_ele_t *tmp;
-    /* Alloced elements
-     * queue_t q : free(q)
-     *      list_ele_t *head : free(head)
-     *          char *value : free(value)
-     *      list_ele_t *tail : free(tail)
-     *          char *value : free(value)
-     */
-    /* Free head's element and other list_ele_t elements */
-    for (tmp = q->head; tmp; ) {
-        list_ele_t *tmp_head = tmp;
-        tmp = tmp->next;
-        free(tmp_head->value);
-        free(tmp_head);
+    if (!q)
+        return;
+
+    list_ele_t *tmp = q->head;
+    while (q->head) {
+        q->head = q->head->next;
+        tmp->next = NULL;
+        free(tmp->value);
+        free(tmp);
+        tmp = q->head;
     }
-    /* Free tail's elements and itself*/
-    free(q->tail->value);
-    free(q->tail);
-    /* Free queue structure */
+   
     free(q);
 }
 
@@ -58,22 +51,34 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
-    if (q==NULL) // if q is NULL
+    if (!q) // if q is NULL
         return false;
+
     list_ele_t *newh;
-    char *news;
-    /* malloc elements for new queue element */
-    news = malloc(strlen(s) * sizeof(char));
+
+    /* allocate space for list element for queue */
     newh = malloc(sizeof(list_ele_t));
-    /* Check whether malloc is successful */
-    /* Maybe later use fprintf & fflush to detail the failure*/
-    if (news==NULL || newh==NULL)
+    if (!newh)
         return false;
-    strcpy(news, s);
-    newh->value = news;
+
+    /* allocate space for string */
+    newh->value = malloc((strlen(s)+1) * sizeof(char));
+    if (!newh->value) {
+        free(newh);
+        return false;
+    }
+    
+    /* clear the string and copy the input string */
+    memset(newh->value, '\0', strlen(s)+1);
+    strncpy(newh->value, s, strlen(s));
+
     /* Check tail, if it is NULL, this is the first insert */
     if (q->tail==NULL)
         q->tail = newh;
+    else
+        while (q->tail->next)
+            q->tail = q->tail->next;
+    
     newh->next = q->head;
     q->size = q->size + 1;
     q->head = newh;
@@ -92,7 +97,6 @@ bool q_insert_tail(queue_t *q, char *s)
     /* TODO: You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
     /* TODO: Remove the above comment when you are about to implement. */
-    return false;
 }
 
 /*
