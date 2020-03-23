@@ -137,7 +137,27 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
     /* TODO: You need to fix up this code. */
     /* TODO: Remove the above comment when you are about to implement. */
+    /* Safety check */
+    if (!q)
+        return false;
+    if (q->size==0)
+        return false;
+    
+    list_ele_t *tmp = q->head;
     q->head = q->head->next;
+
+    /* Check sp is NULL or not*/
+    if (sp) {
+        /* copy removed element to sp */
+        strncpy(sp, tmp->value, bufsize-1);
+        strcat(sp, "\0");
+    }
+
+    /* free section */
+    tmp->next = NULL;
+    free(tmp->value);
+    free(tmp);
+
     return true;
 }
 
