@@ -114,14 +114,16 @@ bool q_insert_tail(queue_t *q, char *s)
     /* clear the string and copy the input string */
     memset(newh->value, '\0', strlen(s)+1);
     strncpy(newh->value, s, strlen(s));
+    newh->next = NULL;
 
     /* first time allocate */
     if (!q->head)
-        q->head = newh;
-    
-    newh->next = NULL;
-    q->tail->next = newh;
-    q->tail = newh;
+        q->tail = q->head = newh;
+    else {
+        q->tail->next = newh;
+        q->tail = newh;
+    }
+    q->size += 1;
     return true;
 }
 
@@ -143,21 +145,21 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
     if (q->size==0)
         return false;
     
-    list_ele_t *tmp = q->head;
-    q->head = q->head->next;
-
-    /* Check sp is NULL or not*/
     if (sp) {
-        /* copy removed element to sp */
-        strncpy(sp, tmp->value, bufsize-1);
-        strcat(sp, "\0");
+        size_t realsize = (bufsize > strlen(q->head->value)) 
+                            ? strlen(q->head->value) 
+                            : bufsize-1;
+        memset(sp, '\0', realsize+1);
+        strncpy(sp, q->head->value, realsize);
     }
 
-    /* free section */
+    list_ele_t *tmp;
+    tmp = q->head;
+    q->head = q->head->next;
     tmp->next = NULL;
     free(tmp->value);
     free(tmp);
-
+    q->size -= 1;
     return true;
 }
 
@@ -182,9 +184,9 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* TODO: Remove the above comment when you are about to implement. */
     if (!q)
+        return;
+    if (q->size==0)
         return;
     list_ele_t *prev=NULL, *current, *next;
     current = q->head;
@@ -202,6 +204,61 @@ void q_reverse(queue_t *q)
     q->tail = current;
 }
 
+/* merge sort for queue q*/
+void merge_split(list_ele_t *head, list_ele_t **front, list_ele_t **back)
+{
+    list_ele_t *slow, *fast;
+    slow = head;
+    fast = head->next;
+    /* fast runs 2 pointers at one time while slow runs 1 */
+    while(fast!=NULL)
+    {
+        fast = fast->next;
+        if (fast!=NULL) {
+            slow = slow->next;
+            fast = fast->next;
+        }
+    }
+    /* store seperated parts */
+    *front = head;
+    *back = slow->next;
+    slow->next = NULL; // break into 2 parts
+}
+
+list_ele_t *merge_compare(list_ele_t *a, list_ele_t *b)
+{
+    list_ele_t *result = NULL;
+    if (a==NULL)
+        return b;
+    else if (b==NULL)
+        return a;
+    /* comparison */
+    if (strcmp(a->value, b->value) < 0) {
+        result = a;
+        a->next = merge_compare(a->next, b);
+    }
+    else {
+        result = b;
+        b->next = merge_compare(a, b->next);
+    }
+    return (result);
+}
+
+void merge_sort(list_ele_t **head)
+{
+    list_ele_t *tmp = *head;
+    list_ele_t *a, *b;
+    if (!tmp || !tmp->next)
+        return;
+
+    merge_split(tmp, &a, &b);
+
+    merge_sort(&a);
+    merge_sort(&b);
+    
+    *head = merge_compare(a, b);
+}
+
 /*
  * Sort elements of queue in ascending order
  * No effect if q is NULL or empty. In addition, if q has only one
@@ -211,4 +268,13 @@ void q_sort(queue_t *q)
 {
     /* TODO: You need to write the code for this function */
     /* TODO: Remove the above comment when you are about to implement. */
+    if (!q)
+        return;
+    if (q->size==0 || q->size==1)
+        return;
+
+    merge_sort(&(q->head));
+    q->tail = q->head;
+    while(q->tail->next)
+        q->tail = q->tail->next;
 }

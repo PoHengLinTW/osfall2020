@@ -95,6 +95,9 @@ void q_reverse(queue_t *q);
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
+void merge_split(list_ele_t *head, list_ele_t **front, list_ele_t **back);
+list_ele_t *merge_compare(list_ele_t *a, list_ele_t *b);
+void merge_sort(list_ele_t **head);
 void q_sort(queue_t *q);
 
 #endif /* LAB0_QUEUE_H */
